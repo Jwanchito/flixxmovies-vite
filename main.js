@@ -2,8 +2,9 @@ const global = {
   currentPage: window.location.pathname,
 };
 
+// Display 20 most popular movies
 async function displayPopularMovies() {
-  const { results } = await fetchAPIData('movie/popular');
+  const { results } = await fetchAPIData(`movie/popular`);
 
   results.forEach((movie) => {
     const div = document.createElement('div');
@@ -19,7 +20,7 @@ async function displayPopularMovies() {
           <div class="card-body">
             <h5 class="card-title">${movie.title}</h5>
             <p class="card-text">
-              <small class="text-muted">${movie.release_date}</small>
+              <small class="text-muted">Release: ${movie.release_date}</small>
             </p>
           </div>
         `;
@@ -27,23 +28,53 @@ async function displayPopularMovies() {
   });
 }
 
+// Display 20 popular TV shows
+async function displayPopularShows() {
+  const { results } = await fetchAPIData('tv/popular');
+
+  results.forEach((show) => {
+    const div = document.createElement('div');
+    div.classList.add('card');
+    div.innerHTML = `
+          <a href="/src/html/.html?id=${show.id}">
+           ${
+             show.poster_path
+               ? `<img src="https://image.tmdb.org/t/p/w500${show.poster_path}" class="card-img-top" alt="${show.name}"/>`
+               : `<img src="/src/images/no-image.jpg" class="card-img-top" alt="${show.name}" />`
+           }
+          </a>
+          <div class="card-body">
+            <h5 class="card-title">${show.name}</h5>
+            <p class="card-text">
+              <small class="text-muted">Air Date: ${show.first_air_date}</small>
+            </p>
+          </div>
+        `;
+    document.querySelector('#popular-shows').appendChild(div);
+  });
+}
+
 // Fetch data from TMBD API
-async function fetchAPIData() {
-  const response = await fetch(
-    'https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=1&sort_by=popularity.desc',
-    {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-        Authorization:
-          'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2Yjk2MjhkODhlMmVmYjI0YjMwYzcyZGY0ZjkxMWMwMSIsInN1YiI6IjY1ZjIxNDBkZTlkYTY5MDE2MzVlNzNhYiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.xYHzmum2DDmh4l6lz9qStSyqLDU2vOyRGmPhFwjH0I8',
-      },
-    }
-  );
+async function fetchAPIData(endpoint) {
+  const API_URL = 'https://api.themoviedb.org/3/';
+  const API_KEY = '37e91f0adcb46c977218bfedf23592f5';
+
+  showSpinner();
+
+  const response = await fetch(`${API_URL}${endpoint}?api_key=${API_KEY}&language=en-US`);
 
   const data = await response.json();
 
+  hideSpinner();
   return data;
+}
+
+function showSpinner() {
+  document.querySelector('.spinner').classList.add('show');
+}
+
+function hideSpinner() {
+  document.querySelector('.spinner').classList.remove('show');
 }
 
 // Highlight active link
@@ -65,7 +96,7 @@ function init() {
       displayPopularMovies();
       break;
     case '/src/html/shows.html':
-      console.log('Shows');
+      displayPopularShows();
       break;
     case '/src/html/tv-details.html':
       console.log('TV Details');
