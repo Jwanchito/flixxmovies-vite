@@ -1,5 +1,15 @@
 const global = {
   currentPage: window.location.pathname,
+  search: {
+    term: '',
+    type: '',
+    page: 1,
+    totalPages: 1,
+  },
+  api: {
+    apiUrl: 'https://api.themoviedb.org/3/',
+    apiKey: '37e91f0adcb46c977218bfedf23592f5',
+  },
 };
 
 // Display 20 most popular movies
@@ -192,6 +202,23 @@ function displayBackgroundImage(type, backgroundPath) {
   }
 }
 
+// Search Movies/Shows
+
+async function search() {
+  const queryString = window.location.search;
+  const urlParams = new URLSearchParams(queryString);
+
+  global.search.type = urlParams.get('type');
+  global.search.term = urlParams.get('search-term');
+
+  if (global.search.term !== '' && global.search.term !== null) {
+    const results = await searchAPIData();
+    console.log(results);
+  } else {
+    showAlert(' Please enter a search term ');
+  }
+}
+
 //Display Slider Movies
 async function displaySlider() {
   const { results } = await fetchAPIData('movie/now_playing');
@@ -219,29 +246,52 @@ async function displaySlider() {
 function initSwiper() {
   const swiper = new Swiper('.swiper', {
     slidesPerView: 1,
-    spaceBetween: 30,
-    freeMode: true,
+    spaceBetween: 70,
     loop: true,
-    autoplay: {
-      delay: 2500,
-      disableOnInteraction: false,
+    navigation: {
+      prevEl: '.swiper-button-prev',
+      nextEl: '.swiper-button-next',
     },
+    freeMode: true,
+    // autoplay: {
+    //   delay: 4000,
+    //   disableOnInteraction: false,
+    // },
     breakpoints: {
       500: { slidesPerView: 2 },
       700: { slidesPerView: 3 },
       1200: { slidesPerView: 4 },
+      // 1600: { slidesPerView: 5 },
+      // 1800: { slidesPerView: 6 },
     },
   });
 }
 
 // Fetch data from TMBD API
 async function fetchAPIData(endpoint) {
-  const API_URL = 'https://api.themoviedb.org/3/';
-  const API_KEY = '37e91f0adcb46c977218bfedf23592f5';
+  const API_URL = global.api.apiUrl;
+  const API_KEY = global.api.apiKey;
 
   showSpinner();
 
   const response = await fetch(`${API_URL}${endpoint}?api_key=${API_KEY}&language=en-US`);
+
+  const data = await response.json();
+
+  hideSpinner();
+  return data;
+}
+
+//Make request to Search
+async function searchAPIData() {
+  const API_URL = global.api.apiUrl;
+  const API_KEY = global.api.apiKey;
+
+  showSpinner();
+
+  const response = await fetch(
+    `${API_URL}search/${global.search.type}?api_key=${API_KEY}&language=en-US&query=${global.search.term}`
+  );
 
   const data = await response.json();
 
@@ -265,6 +315,18 @@ function highlightActivateLink() {
       link.classList.add('active');
     }
   });
+}
+
+//Show Alert
+function showAlert(message, className) {
+  const alertEl = document.createElement('div');
+  alertEl.classList.add('alert', className);
+  alertEl.appendChild(document.createTextNode(message));
+  document.querySelector('#alert').appendChild(alertEl);
+
+  setTimeout(() => {
+    alertEl.remove();
+  }, 3000);
 }
 
 function addCommasToNumber(number) {
@@ -291,7 +353,7 @@ function init() {
       displayShowDetails();
       break;
     case '/src/html/search.html':
-      console.log('Search');
+      search();
       break;
   }
 
